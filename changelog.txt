@@ -1,0 +1,8 @@
+Day 1
+* Review project requirements
+* Study AWS SDK and it's intregations
+* Explore possibilities (Python, Go, SDK vs web requests, SQL query)
+
+Day 0
+* Received project
+* Create Amazon AWS account
