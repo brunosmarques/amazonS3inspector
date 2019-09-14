@@ -37,6 +37,8 @@ def print_bucket(bucket):
     total_files_size = 0
     files_count = len(list(files))
     last_modified_file = datetime(1900, 9, 1).replace(tzinfo=None)
+    storage_types = {}
+
     for file in files: 
         # print(file.key, '{:,.0f}'.format(file.size/float(1<<20))+' MB') #, file.last_modified)
         total_files_size+=file.size
@@ -44,7 +46,13 @@ def print_bucket(bucket):
         last_change = file.last_modified.replace(tzinfo=None)
         if last_modified_file < last_change:
             last_modified_file = last_change
-
+        
+        if (file.storage_class in storage_types): 
+            storage_types[file.storage_class] += 1
+        else: 
+            storage_types[file.storage_class] = 1
+        # storage_types[file.storage_class] = storage_types[file.storage_class] + 1
+        
         # obj.last_modified
 
     print("Bucket name:{}".format(bucket.name))
@@ -53,6 +61,8 @@ def print_bucket(bucket):
     print("Number of files: {}".format(files_count))
     print("Last modified file: {}".format(last_modified_file))
     print("Bucket creation date: {}".format(bucket.creation_date))
+    print("Storage type: {}".format(storage_types))
+    
 
 def print_buckets_info(buckets):
     for bucket in buckets:
@@ -96,6 +106,7 @@ def main():
             response = client.get_bucket_location( Bucket=bucket.name )
             bucket_location = response['LocationConstraint']
             print("Bucket location: {}".format(bucket_location))
+
             print_bucket(bucket)
          
 
