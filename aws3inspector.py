@@ -24,7 +24,7 @@ def pretty_bytes(value):
 
     return "{} bytes".format(value)
 
-def print_files(bucket):    
+def print_bucket(bucket):    
     if args.verbose:        
             print('\tRetreving files in bucket {}'.format(bucket.name), end='...', flush=True)
 
@@ -34,11 +34,6 @@ def print_files(bucket):
     if args.verbose:        
             print('done')
 
-
-    print("\n")
-    print(bucket.__dict__)
-    print("\n")
-    
     total_files_size = 0
     files_count = len(list(files))
     last_modified_file = datetime(1900, 9, 1).replace(tzinfo=None)
@@ -80,9 +75,12 @@ def get_y_n(text):
 def main():
     try:
         s3 = boto3.resource('s3')
-        
+        client = boto3.client('s3')
+
         buckets =  get_buckets(s3)
         buckets_count = len(list(buckets))
+
+        
         # print_bucket
         # s_info(buckets)
 
@@ -94,8 +92,11 @@ def main():
             if not(allowed):
                 sys.exit()
     
-        for bucket in buckets:          
-            print_files(bucket)
+        for bucket in buckets:  
+            response = client.get_bucket_location( Bucket=bucket.name )
+            bucket_location = response['LocationConstraint']
+            print("Bucket location: {}".format(bucket_location))
+            print_bucket(bucket)
          
 
     except botocore.exceptions.NoCredentialsError:
