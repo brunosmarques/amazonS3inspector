@@ -15,6 +15,15 @@ import time, random
 
 from datetime import datetime
 
+def pretty_bytes(value):
+    if args.unit == "kb":
+        return '{:.2f} KB'.format(value/float(1<<10))
+
+    if args.unit == "mb":
+        return '{:.2f} MB'.format(value/float(1<<20))
+
+    return "{} bytes".format(value)
+
 def print_files(bucket):    
     if args.verbose:        
             print('\tRetreving files in bucket {}'.format(bucket.name), end='...', flush=True)
@@ -45,7 +54,7 @@ def print_files(bucket):
 
     print("Bucket name:{}".format(bucket.name))
     # print("Bucket location:{}".format(bucket.))
-    print("Total file size: {}".format(total_files_size))
+    print("Total file size: {}".format(pretty_bytes(total_files_size)))
     print("Number of files: {}".format(files_count))
     print("Last modified file: {}".format(last_modified_file))
     print("Bucket creation date: {}".format(bucket.creation_date))
@@ -109,6 +118,8 @@ def parsearguments():
     
     # add long and short argument
     parser.add_argument("--verbose", "-v", help="Verbose mode", action="store_true")
+
+    parser.add_argument("--unit", "-u", help="unit")
     
     # read arguments from the command line
     return parser.parse_args()
