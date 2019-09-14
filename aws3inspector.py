@@ -69,6 +69,8 @@ def print_buckets_info(buckets):
         print("Bucket name:{}\nBucket creation date:{}".format(bucket.name, bucket.creation_date))
 
 def get_buckets(s3):
+    if args.bucket:
+        return [ s3.Bucket(args.bucket) ]
     return s3.buckets.all()
 
 def get_y_n(text):
@@ -90,7 +92,6 @@ def main():
         buckets =  get_buckets(s3)
         buckets_count = len(list(buckets))
 
-        
         # print_bucket
         # s_info(buckets)
 
@@ -112,8 +113,8 @@ def main():
 
     except botocore.exceptions.NoCredentialsError:
         print("Sorry, I can't find your credentials.")
-    except botocore.exceptions.ClientError:
-        print("Your credentials are invalid, please check your credentials file (~/.aws/credentials)")
+    except botocore.exceptions.ClientError as e:
+        print("Client error, see details below:\n {}".format(e))
     except Exception as e:
         print("Unexpected error occoured, more details bellow\n{}".format(e))
 
@@ -130,6 +131,9 @@ def parsearguments():
     
     # add long and short argument
     parser.add_argument("--verbose", "-v", help="Verbose mode", action="store_true")
+    
+    # add long and short argument
+    parser.add_argument("--bucket", "-b", help="Bucket name" )
 
     parser.add_argument("--unit", "-u", help="unit")
     
