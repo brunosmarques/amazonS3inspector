@@ -27,13 +27,6 @@ class cBucket:
         self.cost = 0
         self.region = ''
 
-# def pretty_bytes(value): #TODO
-#     if args.unit == "kb":
-#         return '{:.2f} KB'.format(value/float(1<<10))
-
-#     if args.unit == "mb":
-#         return '{:.2f} MB'.format(value/float(1<<20))
-
 def format_size(value):
     bit_shift = {"B": 0,
             "kb": 7,
