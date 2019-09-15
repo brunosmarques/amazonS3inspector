@@ -73,25 +73,28 @@ def get_bucket_details(bucket):
     
     last_modified_file = datetime(1, 1, 1).replace(tzinfo=None)
     total_files_size = 0
+    valid_files_count = 0
     storage_types = {}
 
-    for file in files: 
-        total_files_size+=file.size
+    for file in files:        
+    	if file.storage_class == args.type or not(args.type):
+            total_files_size+=file.size
+            valid_files_count+=1
 
-        last_change = file.last_modified.replace(tzinfo=None)
-        if last_modified_file < last_change or last_modified_file=='':
-            last_modified_file = last_change
-        
-        if (file.storage_class in storage_types): 
-            storage_types[file.storage_class] += 1
-        else: 
-            storage_types[file.storage_class] = 1
+            last_change = file.last_modified.replace(tzinfo=None)
+            if last_modified_file < last_change or last_modified_file=='':
+                last_modified_file = last_change
+            
+            if (file.storage_class in storage_types): 
+                storage_types[file.storage_class] += 1
+            else: 
+                storage_types[file.storage_class] = 1
 
     location_response = client.get_bucket_location( Bucket=bucket.name )
         
     coveo_bucket = cBucket(bucket.name)
     coveo_bucket.creation_date = bucket.creation_date.replace(tzinfo=None)
-    coveo_bucket.files_count = len(list(files))
+    coveo_bucket.files_count = valid_files_count
     coveo_bucket.files_size = total_files_size
     coveo_bucket.last_modified = last_modified_file
     coveo_bucket.storage_types = storage_types   
@@ -117,19 +120,20 @@ def get_buckets(s3):
 
 def parsearguments():
     parser = argparse.ArgumentParser()
-    help_text = 'This tool returns information from AWS S3 buckets in a Amazon account'
+    help_text = 'This tool returns useful information from AWS S3 buckets'
     parser = argparse.ArgumentParser(description = help_text)
     
     parser.add_argument("--verbose", "-v", help="Verbose mode", action="store_true")
     parser.add_argument("--group", "-g", help="Group by regions", action="store_true")    
     parser.add_argument("--bucket", "-b", help="Bucket name" )
-    parser.add_argument("--unit", "-u", help="Size unit [kb|KB|mb|MB|gb|GB|TB]")
+    parser.add_argument("--type", "-t", help="Storage type", choices=[ 'STANDARD', 'REDUCED_REDUNDANCY', 'STANDARD_IA', 'ONEZONE_IA', 'INTELLIGENT_TIE' ] )
+    parser.add_argument("--unit", "-u", help="Size unit", choices=[ 'kb', 'KB', 'mb', 'MB', 'gb', 'GB', 'TB'])
 
     return parser.parse_args()
 
 def main():
     try:
-        buckets =  get_buckets(s3)
+        buckets = get_buckets(s3)
         buckets_count = len(list(buckets))
 
         if args.verbose:        
@@ -140,13 +144,13 @@ def main():
             if not(allowed):
                 sys.exit()
     
-        all_coveo_buckets = []
+        target_buckets = []
 
         for bucket in buckets:  
             coveo_bucket = get_bucket_details(bucket)
-            all_coveo_buckets.append(coveo_bucket)
+            target_buckets.append(coveo_bucket)
 
-        print_buckets(all_coveo_buckets)
+        print_buckets(target_buckets)
 
     except botocore.exceptions.NoCredentialsError:
         print("Sorry, I can't find your credentials file. Please double check the ~/.aws/credentials configuration file")
