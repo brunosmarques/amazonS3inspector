@@ -125,6 +125,7 @@ def parsearguments():
     
     parser.add_argument("--verbose", "-v", help="Verbose mode", action="store_true")
     parser.add_argument("--group", "-g", help="Group by regions", action="store_true")    
+    parser.add_argument("--cost", "-c", help="Try to get the cost", action="store_true")    
     parser.add_argument("--bucket", "-b", help="Bucket name" )
     parser.add_argument("--type", "-t", help="Storage type", choices=[ 'STANDARD', 'REDUCED_REDUNDANCY', 'STANDARD_IA', 'ONEZONE_IA', 'INTELLIGENT_TIE' ] )
     parser.add_argument("--unit", "-u", help="Size unit", choices=[ 'kb', 'KB', 'mb', 'MB', 'gb', 'GB', 'TB'])
@@ -163,4 +164,32 @@ HIGH_BUCKETS_COUNT_WARNING = 100
 args = parsearguments()
 s3 = boto3.resource('s3')
 client = boto3.client('s3')
+
+if args.cost:
+    ce = boto3.client('ce')
+    cost_response = ce.get_cost_and_usage(TimePeriod={
+            'Start': '2019-09-12',
+            'End': '2019-09-14'
+        },
+        Granularity='MONTHLY',
+        Metrics=[ 'AmortizedCost']
+    )
+
+    # cost_response = [ 
+    #     {
+    #         'TimePeriod':             {'Start': '2019-09-13', 'End': '2019-09-15'}, 
+    #         'Total':             {'AmortizedCost':  
+    #                                                 {'Amount': '0.001527', 'Unit': 'USD'}
+    #                             },
+    #      'Groups': [], 
+    #      'Estimated': True}
+    #     ] 
+    # print(cost_response['ResultsByTime'].TimePeriod)
+    print(cost_response['ResultsByTime'].pop()['Total']['AmortizedCost']['Amount'])
+    sys.exit()
+
+    # pricing = boto3.client('pricing',)
+    # response = pricing.describe_services()
+    # response = pricing.get_products(type='S3')
+
 main()
