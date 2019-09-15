@@ -50,11 +50,13 @@ def print_buckets(buckets):
     """ Print bucket in different ways
     """
     data = []
-    names = []
-    
+    names = []    
     for bucket in buckets:
-        if args.cost:
-            bucket.cost = (bucket.files_size/sum(bucket.total_size_list)) * (float(total_cost))
+        total_size = sum(bucket.total_size_list)
+        if total_size == 0:
+            bucket.cost = 0
+        else:
+            bucket.cost = (bucket.files_size/total_size) * (float(total_cost))
 
         d = [            
             bucket.region,
@@ -66,20 +68,34 @@ def print_buckets(buckets):
         data.append(d)
         names.append(bucket.name)
 
-    features = ["Region", "Creation Date", "Files", "Size", "Last modified", "Cost"]
-    dataframe = pd.DataFrame(data=data,columns=features,index=names)
+    features = {'region':'Region', 'creation':'Creation Date', 'files':'Files', 'size':'Size', 'modified':'Last modified' , 'cost':'Cost'}
+    dataframe = pd.DataFrame(data=data,columns=features.values(),index=names)
 
     if args.group:
         dataframe = dataframe.groupby('Region').sum()        
     elif args.region:
         dataframe = dataframe[dataframe.Region == args.region]
+    
+    if args.sort:
+        dataframe = dataframe.sort_values(features[args.sort], ascending=False)
 
-    print(dataframe)
+    if not dataframe.empty:
+        print(dataframe)
+    else:
+        print("No buckets match your criteria")
 
 def isValidFile(f):
-    return (f.storage_class == args.type or not(args.type)) and (args.filter in f.key)
+    """ Return a boolean indicating if file f is valid
+    """
+    result = False
+    if f.storage_class == args.type or not(args.type):
+        if str(args.filter) in str(f.key) or not(args.filter):
+            result = True
+    return result
     
-def get_bucket_details(bucket):    
+def get_bucket_details(bucket):
+    """ Get bucket details from amazon, create an populate a cBucket object and return it at the end
+    """ 
     if args.verbose:        
             print('\tRetreving files in bucket {}'.format(bucket.name), end='...', flush=True)
     files = bucket.objects.all()
@@ -106,12 +122,13 @@ def get_bucket_details(bucket):
                 storage_types[f.storage_class] = 1
 
     location_response = client.get_bucket_location( Bucket=bucket.name )
-    
+    location = location_response['LocationConstraint']
+
     coveo_bucket = cBucket(bucket.name)
     coveo_bucket.creation_date = bucket.creation_date.replace(tzinfo=None)
     coveo_bucket.files_count = valid_files_count
     coveo_bucket.files_size = total_files_size
-    coveo_bucket.last_modified = last_modified_file
+    coveo_bucket.last_modified = last_modified_file.replace(tzinfo=None)
     coveo_bucket.storage_types = storage_types   
     coveo_bucket.region = location_response['LocationConstraint']
     coveo_bucket.total_size_list.append(total_files_size)
@@ -119,6 +136,8 @@ def get_bucket_details(bucket):
     return coveo_bucket
 
 def get_y_n(text):
+    """ Get Y or N from user with a friendly message. No input returns False (N)
+    """
     valid_answers = [ 'y','n','Y','N', '' ]
     while True:
         data = input(text)
@@ -130,15 +149,25 @@ def get_y_n(text):
             return False
 
 def get_buckets(s3):
+    """ Get all buckets from Amazon and return a filtered subset of them using command-line filters
+    """
     buckets = s3.buckets.all()
     filtered_buckets = []
-    if args.bucketfilter:
-        for bucket in buckets:
-            if args.bucketfilter in bucket.name:
+    
+    for bucket in buckets:
+        if args.bucketfilter in bucket.name:
+            location = ''
+            if args.region:
+                location_response = client.get_bucket_location( Bucket=bucket.name )
+                location = location_response['LocationConstraint']
+            if location == args.region or not(args.region):
                 filtered_buckets.append(bucket)
-    return filtered_buckets
+    
+    return filtered_buckets, len(filtered_buckets)
 
 def parsearguments():
+    """ Parse arguments from command-line
+    """
     parser = argparse.ArgumentParser()
     help_text = 'This tool returns useful information from AWS S3 bucket'
     parser = argparse.ArgumentParser(description = help_text)
@@ -169,22 +198,25 @@ def parsearguments():
 
     parser.add_argument("--verbose", "-v", help="Verbose mode", action="store_true")
     parser.add_argument("--group", "-g", help="Group by regions", action="store_true")    
-    parser.add_argument("--cost", "-c", help="Try to get the cost", action="store_true")    
+    # parser.add_argument("--cost", "-c", help="Try to get the cost", action="store_true")    
     parser.add_argument("--bucketfilter", "-b", help="Bucket name filter" )
     parser.add_argument("--region", "-r", help="Region filter", choices=aws_regions)
     parser.add_argument("--filter", "-f", help="File filter")
     parser.add_argument("--type", "-t", help="Storage type", choices=[ 'STANDARD', 'REDUCED_REDUNDANCY', 'STANDARD_IA', 'ONEZONE_IA', 'INTELLIGENT_TIE' ] )
     parser.add_argument("--unit", "-u", help="Size unit", choices=[ 'kb', 'KB', 'mb', 'MB', 'gb', 'GB', 'TB'])
+    parser.add_argument("--sort", "-s", help="Sort by feature (descending)", choices=[ 'region', 'creation', 'files', 'modified', 'size', 'cost' ])
 
     return parser.parse_args()
 
 def getTotalCost():
+    """ Get total storage cost from last day from Amazon. Can't be filtered
+    """
     if args.bucketfilter or args.type or args.filter:
         print("WARNING: cost estimation isn't compatible with filtering. Cost results may not be reliabe.")
 
-    ce = boto3.client('ce')
     today = datetime.today().date()
     yesterday = today-timedelta(days=2)
+    ce = boto3.client('ce')
     cost_response = ce.get_cost_and_usage(TimePeriod={
                                             'Start': str(yesterday),
                                             'End': str(today)
@@ -196,19 +228,19 @@ def getTotalCost():
     return c
 
 def main():
+    """ Main method that control global flow
+    """
     try:
-        buckets = get_buckets(s3)       
-        buckets_count = len(list(buckets))
+        buckets, buckets_count = get_buckets(s3)
         
-        if args.cost:
-            global total_cost
-            total_cost = getTotalCost()
+        global total_cost
+        total_cost = getTotalCost()
 
         if args.verbose:        
             print('{} buckets found'.format(buckets_count))
             
         if buckets_count > HIGH_BUCKETS_COUNT_WARNING:
-            allowed = get_y_n("WARNING: high number of buckets found ({}), may take sometime to get all data. Continue (y/N)?".format(buckets_count))
+            allowed = get_y_n("WARNING: high number of buckets found ({}), it may take a while to get all data. Continue (y/N)?".format(buckets_count))
             if not(allowed):
                 sys.exit()
     
@@ -216,7 +248,6 @@ def main():
         for bucket in buckets:  
             coveo_bucket = get_bucket_details(bucket)
             target_buckets.append(coveo_bucket)
-        
         
         print_buckets(target_buckets)
 
@@ -228,7 +259,7 @@ def main():
         print("Unexpected error occoured, more details bellow\n{}".format(e))
 
 # Set constants
-HIGH_BUCKETS_COUNT_WARNING = 2
+HIGH_BUCKETS_COUNT_WARNING = 3
 
 # Initialize global variables
 total_cost = 0
