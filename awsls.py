@@ -17,14 +17,16 @@ from datetime import datetime
 import pandas as pd
 
 class cBucket:
+    total_size_list = []
+
     def __init__(self, name):
         self.name = name
         self.creation_date = datetime(1, 1, 1).replace(tzinfo=None)
         self.files_count = 0
         self.files_size = 0
-        self.last_modified = 0
+        self.last_modified = datetime(1, 1, 1).replace(tzinfo=None)
         self.storage_types = {}
-        self.cost = 0
+        self.cost = 0.
         self.region = ''
 
 def format_size(value):
@@ -45,6 +47,9 @@ def print_buckets(buckets):
     names = []
 
     for bucket in buckets:
+        if args.cost:
+            bucket.cost = (bucket.files_size/sum(bucket.total_size_list)) * (float(total_cost))
+
         d = [            
             bucket.region,
             bucket.creation_date,
@@ -91,7 +96,7 @@ def get_bucket_details(bucket):
                 storage_types[file.storage_class] = 1
 
     location_response = client.get_bucket_location( Bucket=bucket.name )
-        
+    
     coveo_bucket = cBucket(bucket.name)
     coveo_bucket.creation_date = bucket.creation_date.replace(tzinfo=None)
     coveo_bucket.files_count = valid_files_count
@@ -99,6 +104,7 @@ def get_bucket_details(bucket):
     coveo_bucket.last_modified = last_modified_file
     coveo_bucket.storage_types = storage_types   
     coveo_bucket.region = location_response['LocationConstraint']
+    coveo_bucket.total_size_list.append(total_files_size)
 
     return coveo_bucket
 
@@ -161,15 +167,17 @@ def main():
         print("Unexpected error occoured, more details bellow\n{}".format(e))
 
 HIGH_BUCKETS_COUNT_WARNING = 100
+total_cost = 0
 args = parsearguments()
 s3 = boto3.resource('s3')
 client = boto3.client('s3')
 
+
 if args.cost:
     ce = boto3.client('ce')
     cost_response = ce.get_cost_and_usage(TimePeriod={
-            'Start': '2019-09-12',
-            'End': '2019-09-14'
+            'Start': '2019-09-01',
+            'End': '2019-09-30'
         },
         Granularity='MONTHLY',
         Metrics=[ 'AmortizedCost']
@@ -185,8 +193,8 @@ if args.cost:
     #      'Estimated': True}
     #     ] 
     # print(cost_response['ResultsByTime'].TimePeriod)
-    print(cost_response['ResultsByTime'].pop()['Total']['AmortizedCost']['Amount'])
-    sys.exit()
+    total_cost = cost_response['ResultsByTime'].pop()['Total']['AmortizedCost']['Amount']
+    # sys.exit()
 
     # pricing = boto3.client('pricing',)
     # response = pricing.describe_services()
