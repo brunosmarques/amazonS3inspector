@@ -86,8 +86,7 @@ def get_y_n(text):
 
 def main():
     try:
-        s3 = boto3.resource('s3')
-        client = boto3.client('s3')
+
 
         buckets =  get_buckets(s3)
         buckets_count = len(list(buckets))
@@ -112,7 +111,7 @@ def main():
          
 
     except botocore.exceptions.NoCredentialsError:
-        print("Sorry, I can't find your credentials.")
+        print("Sorry, I can't find your credentials file. Please double check the ~/.aws/credentials configuration file")
     except botocore.exceptions.ClientError as e:
         print("Client error, see details below:\n {}".format(e))
     except Exception as e:
@@ -144,6 +143,8 @@ def parsearguments():
 
 HIGH_BUCKETS_COUNT_WARNING = 100
 args = parsearguments()
+s3 = boto3.resource('s3')
+client = boto3.client('s3')
 main()
 
 # ---------------------------------------------------------------------------
