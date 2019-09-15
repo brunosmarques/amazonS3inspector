@@ -16,9 +16,6 @@ from datetime import datetime, timedelta
 # Pandas for data filtering and visualization
 import pandas as pd
 
-# Import re for regex
-import re
-
 class cBucket:
     """ Class that represents a bucket in AWS. Contains name, creation date, files count, total files size, most recent file date modification, files count per storage types, cost and region
     """
@@ -74,12 +71,13 @@ def print_buckets(buckets):
 
     if args.group:
         dataframe = dataframe.groupby('Region').sum()        
-    elif args.filter:
-        dataframe = dataframe.filter(like=args.filter, axis=0)
     elif args.region:
         dataframe = dataframe[dataframe.Region == args.region]
 
     print(dataframe)
+
+def isValidFile(f):
+    return (f.storage_class == args.type or not(args.type)) and (args.filter in f.key)
     
 def get_bucket_details(bucket):    
     if args.verbose:        
@@ -93,19 +91,19 @@ def get_bucket_details(bucket):
     valid_files_count = 0
     storage_types = {}
 
-    for file in files:        
-    	if file.storage_class == args.type or not(args.type):
-            total_files_size+=file.size
+    for f in files:
+        if isValidFile(f):
+            total_files_size+=f.size
             valid_files_count+=1
 
-            last_change = file.last_modified.replace(tzinfo=None)
+            last_change = f.last_modified.replace(tzinfo=None)
             if last_modified_file < last_change or last_modified_file=='':
                 last_modified_file = last_change
             
-            if (file.storage_class in storage_types): 
-                storage_types[file.storage_class] += 1
+            if (f.storage_class in storage_types): 
+                storage_types[f.storage_class] += 1
             else: 
-                storage_types[file.storage_class] = 1
+                storage_types[f.storage_class] = 1
 
     location_response = client.get_bucket_location( Bucket=bucket.name )
     
@@ -142,7 +140,7 @@ def get_buckets(s3):
 
 def parsearguments():
     parser = argparse.ArgumentParser()
-    help_text = 'This tool returns useful information from AWS S3 buckets'
+    help_text = 'This tool returns useful information from AWS S3 bucket'
     parser = argparse.ArgumentParser(description = help_text)
     
     aws_regions = [ 'us-east-2',
@@ -174,7 +172,7 @@ def parsearguments():
     parser.add_argument("--cost", "-c", help="Try to get the cost", action="store_true")    
     parser.add_argument("--bucketfilter", "-b", help="Bucket name filter" )
     parser.add_argument("--region", "-r", help="Region filter", choices=aws_regions)
-    parser.add_argument("--filter", "-f", help="File regex filter")
+    parser.add_argument("--filter", "-f", help="File filter")
     parser.add_argument("--type", "-t", help="Storage type", choices=[ 'STANDARD', 'REDUCED_REDUNDANCY', 'STANDARD_IA', 'ONEZONE_IA', 'INTELLIGENT_TIE' ] )
     parser.add_argument("--unit", "-u", help="Size unit", choices=[ 'kb', 'KB', 'mb', 'MB', 'gb', 'GB', 'TB'])
 
@@ -215,7 +213,6 @@ def main():
                 sys.exit()
     
         target_buckets = []
-
         for bucket in buckets:  
             coveo_bucket = get_bucket_details(bucket)
             target_buckets.append(coveo_bucket)
