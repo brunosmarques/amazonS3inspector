@@ -16,7 +16,12 @@ from datetime import datetime, timedelta
 # Pandas for data filtering and visualization
 import pandas as pd
 
+# Import re for regex
+import re
+
 class cBucket:
+    """ Class that represents a bucket in AWS. Contains name, creation date, files count, total files size, most recent file date modification, files count per storage types, cost and region
+    """
     total_size_list = []
 
     def __init__(self, name):
@@ -30,6 +35,8 @@ class cBucket:
         self.region = ''
 
 def format_size(value):
+    """ Convert bytes to other units, such as KB, MB, GB
+    """
     bit_shift = {"B": 0,
             "kb": 7,
             "KB": 10,
@@ -43,9 +50,11 @@ def format_size(value):
     return "{} bytes".format(value)
 
 def print_buckets(buckets):
+    """ Print bucket in different ways
+    """
     data = []
     names = []
-    print(total_cost)
+    
     for bucket in buckets:
         if args.cost:
             bucket.cost = (bucket.files_size/sum(bucket.total_size_list)) * (float(total_cost))
@@ -64,13 +73,13 @@ def print_buckets(buckets):
     dataframe = pd.DataFrame(data=data,columns=features,index=names)
 
     if args.group:
-        grouped_dataframe = dataframe.groupby('Region').sum()
-        print(grouped_dataframe)
+        dataframe = dataframe.groupby('Region').sum()        
+    elif args.filter:
+        dataframe = dataframe.filter(like=args.filter, axis=0)
     elif args.region:
-        filtered_dataframe = dataframe[dataframe.Region == args.region]
-        print(filtered_dataframe)
-    else:
-        print(dataframe)
+        dataframe = dataframe[dataframe.Region == args.region]
+
+    print(dataframe)
     
 def get_bucket_details(bucket):    
     if args.verbose:        
@@ -123,9 +132,13 @@ def get_y_n(text):
             return False
 
 def get_buckets(s3):
-    if args.bucket:
-        return [ s3.Bucket(args.bucket) ]
-    return s3.buckets.all()
+    buckets = s3.buckets.all()
+    filtered_buckets = []
+    if args.bucketfilter:
+        for bucket in buckets:
+            if args.bucketfilter in bucket.name:
+                filtered_buckets.append(bucket)
+    return filtered_buckets
 
 def parsearguments():
     parser = argparse.ArgumentParser()
@@ -159,15 +172,16 @@ def parsearguments():
     parser.add_argument("--verbose", "-v", help="Verbose mode", action="store_true")
     parser.add_argument("--group", "-g", help="Group by regions", action="store_true")    
     parser.add_argument("--cost", "-c", help="Try to get the cost", action="store_true")    
-    parser.add_argument("--bucket", "-b", help="Bucket name" )
+    parser.add_argument("--bucketfilter", "-b", help="Bucket name filter" )
     parser.add_argument("--region", "-r", help="Region filter", choices=aws_regions)
+    parser.add_argument("--filter", "-f", help="File regex filter")
     parser.add_argument("--type", "-t", help="Storage type", choices=[ 'STANDARD', 'REDUCED_REDUNDANCY', 'STANDARD_IA', 'ONEZONE_IA', 'INTELLIGENT_TIE' ] )
     parser.add_argument("--unit", "-u", help="Size unit", choices=[ 'kb', 'KB', 'mb', 'MB', 'gb', 'GB', 'TB'])
 
     return parser.parse_args()
 
 def getTotalCost():
-    if args.bucket or args.type:
+    if args.bucketfilter or args.type or args.filter:
         print("WARNING: cost estimation isn't compatible with filtering. Cost results may not be reliabe.")
 
     ce = boto3.client('ce')
@@ -185,14 +199,18 @@ def getTotalCost():
 
 def main():
     try:
-        buckets = get_buckets(s3)
+        buckets = get_buckets(s3)       
         buckets_count = len(list(buckets))
+        
+        if args.cost:
+            global total_cost
+            total_cost = getTotalCost()
 
         if args.verbose:        
             print('{} buckets found'.format(buckets_count))
-
+            
         if buckets_count > HIGH_BUCKETS_COUNT_WARNING:
-            allowed = get_y_n("WARNING: high number of buckets found, may take sometime to get all data. Continue (y/N)?")
+            allowed = get_y_n("WARNING: high number of buckets found ({}), may take sometime to get all data. Continue (y/N)?".format(buckets_count))
             if not(allowed):
                 sys.exit()
     
@@ -202,10 +220,6 @@ def main():
             coveo_bucket = get_bucket_details(bucket)
             target_buckets.append(coveo_bucket)
         
-        if args.cost:
-            global total_cost
-            total_cost = getTotalCost()
-            
         
         print_buckets(target_buckets)
 
@@ -217,7 +231,7 @@ def main():
         print("Unexpected error occoured, more details bellow\n{}".format(e))
 
 # Set constants
-HIGH_BUCKETS_COUNT_WARNING = 100
+HIGH_BUCKETS_COUNT_WARNING = 2
 
 # Initialize global variables
 total_cost = 0
