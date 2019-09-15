@@ -10,10 +10,10 @@ import argparse
 # System library to exit to console
 import sys
 
-# Datetime
-from datetime import datetime
+# Datetime for date manipulation
+from datetime import datetime, timedelta
 
-# Pandas for dataframe
+# Pandas for data filtering and visualization
 import pandas as pd
 
 class cBucket:
@@ -45,7 +45,7 @@ def format_size(value):
 def print_buckets(buckets):
     data = []
     names = []
-
+    print(total_cost)
     for bucket in buckets:
         if args.cost:
             bucket.cost = (bucket.files_size/sum(bucket.total_size_list)) * (float(total_cost))
@@ -66,6 +66,9 @@ def print_buckets(buckets):
     if args.group:
         grouped_dataframe = dataframe.groupby('Region').sum()
         print(grouped_dataframe)
+    elif args.region:
+        filtered_dataframe = dataframe[dataframe.Region == args.region]
+        print(filtered_dataframe)
     else:
         print(dataframe)
     
@@ -129,14 +132,56 @@ def parsearguments():
     help_text = 'This tool returns useful information from AWS S3 buckets'
     parser = argparse.ArgumentParser(description = help_text)
     
+    aws_regions = [ 'us-east-2',
+        'us-east-1',
+        'us-west-1',
+        'us-west-2',
+        'ap-east-1',
+        'ap-south-1',
+        'ap-northeast-3',
+        'ap-northeast-2',
+        'ap-southeast-1',
+        'ap-southeast-2',
+        'ap-northeast-1',
+        'ca-central-1',
+        'cn-north-1',
+        'cn-northwest-1',
+        'eu-central-1',
+        'eu-west-1',
+        'eu-west-2',
+        'eu-west-3',
+        'eu-north-1',
+        'me-south-1',
+        'sa-east-1',
+        'us-gov-east-1',
+        'us-gov-west-1']
+
     parser.add_argument("--verbose", "-v", help="Verbose mode", action="store_true")
     parser.add_argument("--group", "-g", help="Group by regions", action="store_true")    
     parser.add_argument("--cost", "-c", help="Try to get the cost", action="store_true")    
     parser.add_argument("--bucket", "-b", help="Bucket name" )
+    parser.add_argument("--region", "-r", help="Region filter", choices=aws_regions)
     parser.add_argument("--type", "-t", help="Storage type", choices=[ 'STANDARD', 'REDUCED_REDUNDANCY', 'STANDARD_IA', 'ONEZONE_IA', 'INTELLIGENT_TIE' ] )
     parser.add_argument("--unit", "-u", help="Size unit", choices=[ 'kb', 'KB', 'mb', 'MB', 'gb', 'GB', 'TB'])
 
     return parser.parse_args()
+
+def getTotalCost():
+    if args.bucket or args.type:
+        print("WARNING: cost estimation isn't compatible with filtering. Cost results may not be reliabe.")
+
+    ce = boto3.client('ce')
+    today = datetime.today().date()
+    yesterday = today-timedelta(days=2)
+    cost_response = ce.get_cost_and_usage(TimePeriod={
+                                            'Start': str(yesterday),
+                                            'End': str(today)
+                                        },
+                                        Granularity='MONTHLY',
+                                        Metrics=[ 'AmortizedCost']
+                                    )
+    c = cost_response['ResultsByTime'].pop()['Total']['AmortizedCost']['Amount']
+    return c
 
 def main():
     try:
@@ -156,7 +201,12 @@ def main():
         for bucket in buckets:  
             coveo_bucket = get_bucket_details(bucket)
             target_buckets.append(coveo_bucket)
-
+        
+        if args.cost:
+            global total_cost
+            total_cost = getTotalCost()
+            
+        
         print_buckets(target_buckets)
 
     except botocore.exceptions.NoCredentialsError:
@@ -166,38 +216,17 @@ def main():
     except Exception as e:
         print("Unexpected error occoured, more details bellow\n{}".format(e))
 
+# Set constants
 HIGH_BUCKETS_COUNT_WARNING = 100
+
+# Initialize global variables
 total_cost = 0
+
+# Parse command-line arguments
 args = parsearguments()
+
+# Instantiates Amazon SDK resources
 s3 = boto3.resource('s3')
 client = boto3.client('s3')
-
-
-if args.cost:
-    ce = boto3.client('ce')
-    cost_response = ce.get_cost_and_usage(TimePeriod={
-            'Start': '2019-09-01',
-            'End': '2019-09-30'
-        },
-        Granularity='MONTHLY',
-        Metrics=[ 'AmortizedCost']
-    )
-
-    # cost_response = [ 
-    #     {
-    #         'TimePeriod':             {'Start': '2019-09-13', 'End': '2019-09-15'}, 
-    #         'Total':             {'AmortizedCost':  
-    #                                                 {'Amount': '0.001527', 'Unit': 'USD'}
-    #                             },
-    #      'Groups': [], 
-    #      'Estimated': True}
-    #     ] 
-    # print(cost_response['ResultsByTime'].TimePeriod)
-    total_cost = cost_response['ResultsByTime'].pop()['Total']['AmortizedCost']['Amount']
-    # sys.exit()
-
-    # pricing = boto3.client('pricing',)
-    # response = pricing.describe_services()
-    # response = pricing.get_products(type='S3')
 
 main()
