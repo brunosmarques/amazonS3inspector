@@ -41,7 +41,7 @@ python awsls.py
   --group, -g
 ```
 ## Examples
-#### Get all buckets details sorted by cost
+#### Get information from all buckets, sort by cost
 ```
 python awsls.py -s cost
 ```
@@ -70,7 +70,7 @@ mybucket1  us-east-2 2019-09-15 19:26:16      1  0 bytes 2019-09-15 19:27:18    
 ```
 </details>
 
-#### Get information from buckets named "prd", sort by modified date and display results in MB
+#### Get information from buckets named "prd", sort by modified date, display results in MB
 ```
 python awsls.py -b prd -s modified -u MB
 ```
@@ -82,5 +82,55 @@ python awsls.py -b prd -s modified -u MB
 mybucketprd1  us-east-2 2019-09-13 12:05:21      8    3 MB 2019-09-15 21:07:33  0.005881
 mybucketprd3  sa-east-1 2019-09-13 12:06:21      3  108 MB 2019-09-14 19:49:03  0.187900
 mybucketprd2  us-east-2 2019-09-13 12:05:44    373  688 MB 2019-09-14 15:01:38  1.193732
+```
+</details>
+
+#### Get information from buckets in region us-east-2
+```
+python awsls.py -r us-east-2
+```
+<details>
+  <summary>Result</summary>  
+  
+```
+                 Region       Creation Date  Files    Size       Last modified      Cost
+mybucketprd1  us-east-2 2019-09-13 12:05:21      8    3 MB 2019-09-15 21:07:33  0.005881
+mybucketprd2  us-east-2 2019-09-13 12:05:44    373  688 MB 2019-09-14 15:01:38  1.193732
+```
+</details>
+
+#### Get information from all buckets, group by region, sum cost and size
+```
+python awsls.py -g
+```
+<details>
+  <summary>Result</summary>  
+  
+```
+TODO
+```
+</details>
+
+#### Get information from all buckets, filter files that contains CACHE in their path
+```
+python awsls.py -f CACHE
+```
+<details>
+  <summary>Result</summary>  
+  
+```
+TODO
+```
+</details>
+
+#### Get information from buckets named "mybucketprd2", filter by STANDARD storage class, display results in KB
+```
+python awsls.py -b mybucketprd2 -t STANDARD -u KB
+```
+<details>
+  <summary>Result</summary>  
+  
+```
+TODO
 ```
 </details>
