@@ -41,7 +41,7 @@ python awsls.py
   --type, -t
 ```
 ## Examples
-### Get all buckets details sorted by cost
+#### Get all buckets details sorted by cost
 ```
 python awsls.py -s cost
 ```
@@ -53,7 +53,7 @@ mybucketprd1    us-east-2 2019-09-13 12:05:21      8    3552303 bytes 2019-09-15
 mybucket1       us-east-2 2019-09-15 19:26:16      1          0 bytes 2019-09-15 19:27:18  0.000000
 ```
 
-### Get details from a specific bucket named "mybucket1"
+#### Get details from a specific bucket named "mybucket1"
 ```
 python awsls.py -b mybucket1
 ```
@@ -62,18 +62,13 @@ python awsls.py -b mybucket1
 mybucket1  us-east-2 2019-09-15 19:26:16      1  0 bytes 2019-09-15 19:27:18     0
 ```
 
-### Get information from buckets named "prd", sort by modified date and display results in MB
+#### Get information from buckets named "prd", sort by modified date and display results in MB
 ```
 python awsls.py -b prd -s modified -u MB
 ```
-<details>
-  <summary>Result</summary>  
-  
-```python
+```
                  Region       Creation Date  Files    Size       Last modified      Cost
 mybucketprd1  us-east-2 2019-09-13 12:05:21      8    3 MB 2019-09-15 21:07:33  0.005881
 mybucketprd3  sa-east-1 2019-09-13 12:06:21      3  108 MB 2019-09-14 19:49:03  0.187900
 mybucketprd2  us-east-2 2019-09-13 12:05:44    373  688 MB 2019-09-14 15:01:38  1.193732
 ```
-  
-</details>
