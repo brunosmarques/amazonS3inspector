@@ -5,7 +5,7 @@ Day 3
 * Arguments improvments
 * Cost finally available (thank you Amazon)
 * Basic code documentation
-
+ 
 Day 2
 * Added basic data, such as get bucket name, region, objects, etc
 * Command-line arguments done properly
