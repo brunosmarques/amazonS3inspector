@@ -46,29 +46,44 @@ def format_size(value):
         return "{:,.0f} {}".format(value / float(1 << bit_shift[args.unit]),args.unit) 
     return "{} bytes".format(value)
 
+def get_proportion(part, whole):
+    """ Get proportion between part and whole, if whole is zero, returns 1 to be used as 100%
+    """
+    if whole == 0:
+        return 1
+    return float(part)/float(whole)
+
 def print_buckets(buckets):
-    """ Print bucket in different ways
+    """ Print buckets in different ways
     """
     data = []
-    names = []    
+    names = []
+
+    # check if buckets list is empty in the fastest way
+    if buckets:
+        # "total_size_list" is a shared property from class cBucket. It can be calculated inside the loop for each bucket, but it's much faster this way
+        total_size = sum(buckets[0].total_size_list)
+
     for bucket in buckets:
-        total_size = sum(bucket.total_size_list)
         if total_size == 0:
             bucket.cost = 0
         else:
-            bucket.cost = (bucket.files_size/total_size) * (float(total_cost))
+            bucket.cost = get_proportion(bucket.files_size, total_size) * float(total_cost)
 
-        d = [            
+        # "d" is an array with all bucket data formated and ready to be displayed
+        d = [
             bucket.region,
             bucket.creation_date,
             bucket.files_count,
             format_size(bucket.files_size),
+            "{:.2f}%".format(get_proportion(bucket.files_size, total_size) * 100),
             bucket.last_modified,
             bucket.cost ]
         data.append(d)
         names.append(bucket.name)
 
-    features = {'region':'Region', 'creation':'Creation Date', 'files':'Files', 'size':'Size', 'modified':'Last modified' , 'cost':'Cost'}
+    # "features" dictionary with key:values that are the collumns in final table. Keys are also used in --sort argument
+    features = {'region':'Region', 'creation':'Creation Date', 'files':'Files', 'real_size':'Size', 'size':'% Size', 'modified':'Last modified' , 'cost':'Cost'}
     dataframe = pd.DataFrame(data=data,columns=features.values(),index=names)
 
     if args.group:
@@ -79,12 +94,12 @@ def print_buckets(buckets):
     if args.sort:
         dataframe = dataframe.sort_values(features[args.sort], ascending=False)
 
-    if not dataframe.empty:
-        print(dataframe)
-    else:
+    if dataframe.empty:
         print("No buckets match your criteria")
+    else:
+        print(dataframe)
 
-def isValidFile(f):
+def is_valid_file(f):
     """ Return a boolean indicating if file f is valid
     """
     result = False
@@ -108,7 +123,7 @@ def get_bucket_details(bucket):
     storage_types = {}
 
     for f in files:
-        if isValidFile(f):
+        if is_valid_file(f):
             total_files_size+=f.size
             valid_files_count+=1
 
@@ -148,9 +163,10 @@ def get_y_n(text):
         else:
             return False
 
-def get_buckets(s3):
+def get_buckets():
     """ Get all buckets from Amazon and return a filtered subset of them using command-line filters
     """
+    global s3
     buckets = s3.buckets.all()
     filtered_buckets = []
     
@@ -165,7 +181,7 @@ def get_buckets(s3):
     
     return filtered_buckets, len(filtered_buckets)
 
-def parsearguments():
+def parse_arguments():
     """ Parse arguments from command-line
     """
     parser = argparse.ArgumentParser()
@@ -208,10 +224,10 @@ def parsearguments():
 
     return parser.parse_args()
 
-def getTotalCost():
+def get_total_cost():
     """ Get total storage cost from last day from Amazon. Can't be filtered
     """
-    if args.bucketfilter or args.type or args.filefilter:
+    if args.bucketfilter or args.filefilter or args.regionfilter or args.type:
         print("WARNING: cost estimation isn't compatible with filtering. Cost results may not be reliabe.")
 
     today = datetime.today().date()
@@ -235,10 +251,10 @@ def main():
     """ Main method that control global flow
     """
     try:
-        buckets, buckets_count = get_buckets(s3)
+        buckets, buckets_count = get_buckets()
         
         global total_cost
-        total_cost = getTotalCost()
+        total_cost = get_total_cost()
 
         if args.verbose:        
             print('{} buckets found'.format(buckets_count))
@@ -269,10 +285,11 @@ HIGH_BUCKETS_COUNT_WARNING = 3
 total_cost = 0
 
 # Parse command-line arguments
-args = parsearguments()
+args = parse_arguments()
 
 # Instantiates Amazon SDK resources
 s3 = boto3.resource('s3')
 client = boto3.client('s3')
 
+# Main function
 main()
