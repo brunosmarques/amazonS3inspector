@@ -179,7 +179,7 @@ def get_buckets():
             if location == args.regionfilter or not(args.regionfilter):
                 filtered_buckets.append(bucket)
     
-    return filtered_buckets, len(filtered_buckets)
+    return filtered_buckets
 
 def parse_arguments():
     """ Parse arguments from command-line
@@ -243,7 +243,7 @@ def get_total_cost():
                                         )
         c = cost_response['ResultsByTime'].pop()['Total']['AmortizedCost']['Amount']
     except Exception:
-        print("Can't get cost estimation from Amazon, cost will be zero")
+        print("WARNING: Can't get cost estimation from Amazon, cost will be zero")
         c = 0
     return c
 
@@ -251,7 +251,8 @@ def main():
     """ Main method that control global flow
     """
     try:
-        buckets, buckets_count = get_buckets()
+        buckets = get_buckets()
+        buckets_count = len(buckets)
         
         global total_cost
         total_cost = get_total_cost()

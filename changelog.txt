@@ -1,3 +1,6 @@
+Day 4
+* Documentation and code refinement
+
 Day 3
 * Refactored code, performance improvments
 * Sort capabilities

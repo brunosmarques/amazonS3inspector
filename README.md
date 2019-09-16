@@ -11,7 +11,7 @@ Command line tool that returns information over all S3 buckets in a Amazon accou
 1. Install [Python](https://www.python.org/downloads/) 3.6 (or later) on your system
 2. On a terminal at downloaded folder:
 ```
-pip install -r requirements
+pip install -r requirements.txt
 ```
 3. Verify your Amazon Credentials in **~/.aws/credentials** file
     * Make sure to have [Cost Explorer](https://console.aws.amazon.com/cost-reports/home) enabled (it take at least 24h after activation to be available)
