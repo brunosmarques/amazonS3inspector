@@ -155,7 +155,7 @@ def get_buckets(s3):
     filtered_buckets = []
     
     for bucket in buckets:
-        if args.bucketfilter in bucket.name:
+        if str(args.bucketfilter) in str(bucket.name) or not(args.bucketfilter):
             location = ''
             if args.region:
                 location_response = client.get_bucket_location( Bucket=bucket.name )
