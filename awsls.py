@@ -73,8 +73,8 @@ def print_buckets(buckets):
 
     if args.group:
         dataframe = dataframe.groupby('Region').sum()        
-    elif args.region:
-        dataframe = dataframe[dataframe.Region == args.region]
+    elif args.regionfilter:
+        dataframe = dataframe[dataframe.Region == args.regionfilter]
     
     if args.sort:
         dataframe = dataframe.sort_values(features[args.sort], ascending=False)
@@ -89,7 +89,7 @@ def isValidFile(f):
     """
     result = False
     if f.storage_class == args.type or not(args.type):
-        if str(args.filter) in str(f.key) or not(args.filter):
+        if str(args.filefilter) in str(f.key) or not(args.filefilter):
             result = True
     return result
     
@@ -157,10 +157,10 @@ def get_buckets(s3):
     for bucket in buckets:
         if str(args.bucketfilter) in str(bucket.name) or not(args.bucketfilter):
             location = ''
-            if args.region:
+            if args.regionfilter:
                 location_response = client.get_bucket_location( Bucket=bucket.name )
                 location = location_response['LocationConstraint']
-            if location == args.region or not(args.region):
+            if location == args.regionfilter or not(args.regionfilter):
                 filtered_buckets.append(bucket)
     
     return filtered_buckets, len(filtered_buckets)
@@ -200,8 +200,8 @@ def parsearguments():
     parser.add_argument("--group", "-g", help="Group by regions", action="store_true")    
     # parser.add_argument("--cost", "-c", help="Try to get the cost", action="store_true")    
     parser.add_argument("--bucketfilter", "-b", help="Bucket name filter" )
-    parser.add_argument("--region", "-r", help="Region filter", choices=aws_regions)
-    parser.add_argument("--filter", "-f", help="File filter")
+    parser.add_argument("--regionfilter", "-r", help="Region filter", choices=aws_regions)
+    parser.add_argument("--filefilter", "-f", help="File filter")
     parser.add_argument("--type", "-t", help="Storage type", choices=[ 'STANDARD', 'REDUCED_REDUNDANCY', 'STANDARD_IA', 'ONEZONE_IA', 'INTELLIGENT_TIE' ] )
     parser.add_argument("--unit", "-u", help="Size unit", choices=[ 'kb', 'KB', 'mb', 'MB', 'gb', 'GB', 'TB'])
     parser.add_argument("--sort", "-s", help="Sort by feature (descending)", choices=[ 'region', 'creation', 'files', 'modified', 'size', 'cost' ])
@@ -211,7 +211,7 @@ def parsearguments():
 def getTotalCost():
     """ Get total storage cost from last day from Amazon. Can't be filtered
     """
-    if args.bucketfilter or args.type or args.filter:
+    if args.bucketfilter or args.type or args.filefilter:
         print("WARNING: cost estimation isn't compatible with filtering. Cost results may not be reliabe.")
 
     today = datetime.today().date()

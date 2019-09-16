@@ -1,7 +1,22 @@
+Day 3
+* Refactored code, performance improvments
+* Sort capabilities
+* More filters options
+* Arguments improvments
+* Cost finally available (thank you Amazon)
+* Basic code documentation
+
+Day 2
+* Added basic data, such as get bucket name, region, objects, etc
+* Command-line arguments done properly
+* Size formating using bit shift operator
+* Added bucket name, storage type and others filters
+* Group by region option
+
 Day 1
-* Review project requirements
-* Study AWS SDK and it's intregations
-* Explore possibilities (Python, Go, SDK vs web requests, SQL query)
+* Project requirements review
+* Study of AWS SDK and it's intregations
+* Explored possibilities (Python, Go, SDK vs web requests)
 
 Day 0
 * Received project
