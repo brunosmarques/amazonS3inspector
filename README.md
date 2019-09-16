@@ -28,60 +28,59 @@ aws_secret_access_key=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 ```
 python awsls.py 
 ```
-### Arguments
+## Arguments
 ```
   --help, -h
   --verbose, -v
-  --bucketfilter, -b
-  --filefilter, -f
-  --regionfilter, -r
+  --bucketfilter, -b       BUCKETNAME
+  --filefilter, -f         FILENAME
+  --regionfilter, -r       { us-east-2,us-east-1,us-west-1,us-west-2,ap-east-1,ap-south-1,... }
+  --unit, -u               {kb,KB,mb,MB,gb,GB,TB}
+  --sort, -s               {region,creation,files,modified,size,cost}
+  --type, -t               {STANDARD,REDUCED_REDUNDANCY,STANDARD_IA,ONEZONE_IA,INTELLIGENT_TIE}
   --group, -g
-  --unit, -u
-  --sort, -s
-  --type, -t
 ```
 ## Examples
-Get all buckets details sorted by cost
+#### Get all buckets details sorted by cost
 ```
 python awsls.py -s cost
 ```
+<details>
+  <summary>Result</summary>  
+  
+```
+                   Region       Creation Date  Files             Size       Last modified      Cost
+mybucketprd2    us-east-2 2019-09-13 12:05:44    373  721070816 bytes 2019-09-14 15:01:38  1.159216
+mybucketprd3    sa-east-1 2019-09-13 12:06:21      3  113500480 bytes 2019-09-14 19:49:03  0.182467
+mybucketprd1    us-east-2 2019-09-13 12:05:21      8    3552303 bytes 2019-09-15 21:07:33  0.005711
+mybucket1       us-east-2 2019-09-15 19:26:16      1          0 bytes 2019-09-15 19:27:18  0.000000
+```
+</details>
 
-Get details from a specific bucket named mybucket1
+#### Get details from a specific bucket named "mybucket1"
 ```
 python awsls.py -b mybucket1
 ```
+<details>
+  <summary>Result</summary>  
+  
+```
+              Region       Creation Date  Files     Size       Last modified  Cost
+mybucket1  us-east-2 2019-09-15 19:26:16      1  0 bytes 2019-09-15 19:27:18     0
+```
+</details>
 
-List information about all buckets with "prd" on it's name
+#### Get information from buckets named "prd", sort by modified date and display results in MB
 ```
-python awsls.py -b prd
+python awsls.py -b prd -s modified -u MB
 ```
-
-Get information from all buckets in region us-east-2
+<details>
+  <summary>Result</summary>  
+  
 ```
-python awsls.py -r us-east-2
+                 Region       Creation Date  Files    Size       Last modified      Cost
+mybucketprd1  us-east-2 2019-09-13 12:05:21      8    3 MB 2019-09-15 21:07:33  0.005881
+mybucketprd3  sa-east-1 2019-09-13 12:06:21      3  108 MB 2019-09-14 19:49:03  0.187900
+mybucketprd2  us-east-2 2019-09-13 12:05:44    373  688 MB 2019-09-14 15:01:38  1.193732
 ```
-
-Group all buckets by region, sum it's cost and size
-```
-python awsls.py -g
-```
-
-Get information from all buckets, but only for files that are inside a folder named CACHE
-```
-python awsls.py -f CACHE
-```
-
-Get information from all buckets, but only for files that are inside a folder named CACHE/TMP
-```
-python awsls.py -f CACHE/TMP
-```
-
-Get information from buckets named MyBucket, sort by size and display results in GB
-```
-python awsls.py -b MyBucket -s size -u MB
-```
-
-Get information from buckets named MyBucket and filter results by STANDARD storage class files only
-```
-python awsls.py -b MyBucket -t STANDARD
-```
+</details>
