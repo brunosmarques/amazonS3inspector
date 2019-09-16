@@ -107,7 +107,10 @@ python awsls.py -g
   <summary>Result</summary>  
   
 ```
-TODO
+           Files      Cost
+Region
+sa-east-1      3  0.187900
+us-east-2    382  1.199613
 ```
 </details>
 
@@ -119,7 +122,11 @@ python awsls.py -f CACHE
   <summary>Result</summary>  
   
 ```
-TODO
+                 Region       Creation Date  Files           Size        Last modified      Cost
+mybucket1     us-east-2 2019-09-15 19:26:16      1        0 bytes  2019-09-15 19:27:18  0.000000
+mybucketprd1  us-east-2 2019-09-13 12:05:21      6  1974110 bytes  2019-09-15 21:07:33  1.387513
+mybucketprd2  us-east-2 2019-09-13 12:05:44      0        0 bytes  0001-01-01 00:00:00  0.000000
+mybucketprd3  sa-east-1 2019-09-13 12:06:21      0        0 bytes  0001-01-01 00:00:00  0.000000
 ```
 </details>
 
@@ -131,6 +138,7 @@ python awsls.py -b mybucketprd2 -t STANDARD -u KB
   <summary>Result</summary>  
   
 ```
-TODO
+                 Region       Creation Date  Files        Size       Last modified      Cost
+mybucketprd2  us-east-2 2019-09-13 12:05:44    373  704,171 KB 2019-09-14 15:01:38  1.387513
 ```
 </details>
