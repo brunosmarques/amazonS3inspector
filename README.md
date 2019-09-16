@@ -60,7 +60,7 @@ python awsls.py -b mybucket1
 ```
 Result
 ```
-            Region       Creation Date  Files     Size       Last modified  Cost
+              Region       Creation Date  Files     Size       Last modified  Cost
 mybucket1  us-east-2 2019-09-15 19:26:16      1  0 bytes 2019-09-15 19:27:18     0
 ```
 
