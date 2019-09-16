@@ -216,15 +216,19 @@ def getTotalCost():
 
     today = datetime.today().date()
     yesterday = today-timedelta(days=2)
-    ce = boto3.client('ce')
-    cost_response = ce.get_cost_and_usage(TimePeriod={
-                                            'Start': str(yesterday),
-                                            'End': str(today)
-                                        },
-                                        Granularity='MONTHLY',
-                                        Metrics=[ 'AmortizedCost']
-                                    )
-    c = cost_response['ResultsByTime'].pop()['Total']['AmortizedCost']['Amount']
+    try:
+        ce = boto3.client('ce')
+        cost_response = ce.get_cost_and_usage(TimePeriod={
+                                                'Start': str(yesterday),
+                                                'End': str(today)
+                                            },
+                                            Granularity='MONTHLY',
+                                            Metrics=[ 'AmortizedCost']
+                                        )
+        c = cost_response['ResultsByTime'].pop()['Total']['AmortizedCost']['Amount']
+    except Exception:
+        print("Can't get cost estimation from Amazon, cost will be zero")
+        c = 0
     return c
 
 def main():
