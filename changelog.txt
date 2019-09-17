@@ -1,11 +1,12 @@
 Day 4
 * Documentation and code refinement
+* Bug fixes
 
 Day 3
-* Refactored code, performance improvments
+* Refactored code, performance improvements
 * Sort capabilities
 * More filters options
-* Arguments improvments
+* Arguments improvements
 * Cost finally available (thank you Amazon)
 * Basic code documentation
  
