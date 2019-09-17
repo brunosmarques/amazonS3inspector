@@ -26,10 +26,21 @@ class cBucket:
         self.creation_date = datetime(1, 1, 1).replace(tzinfo=None)
         self.files_count = 0
         self.files_size = 0
-        self.last_modified = datetime(1, 1, 1).replace(tzinfo=None)
+        self._last_modified = datetime(1, 1, 1).replace(tzinfo=None)
         self.storage_types = {}
         self.cost = 0.
         self.region = ''
+
+    @property
+    def last_modified(self):
+        if self._last_modified == datetime(1, 1, 1).replace(tzinfo=None):
+            return "-"
+        else:
+            return self._last_modified
+    
+    @last_modified.setter
+    def last_modified(self, last_modified):
+        self._last_modified = last_modified
 
 def format_size(value):
     """ Convert bytes to other units, such as KB, MB, GB
@@ -46,11 +57,17 @@ def format_size(value):
         return "{:,.0f} {}".format(value / float(1 << bit_shift[args.unit]),args.unit) 
     return "{} bytes".format(value)
 
+def format_percent(part, whole):
+    """ format percentage of value
+    """
+    proportion = get_proportion(part, whole)
+    return "{:.2f}%".format(proportion * 100)
+
 def get_proportion(part, whole):
     """ Get proportion between part and whole, if whole is zero, returns 1 to be used as 100%
     """
     if whole == 0:
-        return 1
+        return 0
     return float(part)/float(whole)
 
 def print_buckets(buckets):
@@ -60,8 +77,8 @@ def print_buckets(buckets):
     names = []
 
     # check if buckets list is empty in the fastest way
-    if buckets:
-        # "total_size_list" is a shared property from class cBucket. It can be calculated inside the loop for each bucket, but it's much faster this way
+    # "total_size_list" is a shared property from class cBucket. It can be calculated inside the loop for each bucket, but it's much faster this way
+    if buckets:        
         total_size = sum(buckets[0].total_size_list)
 
     for bucket in buckets:
@@ -76,7 +93,7 @@ def print_buckets(buckets):
             bucket.creation_date,
             bucket.files_count,
             format_size(bucket.files_size),
-            "{:.2f}%".format(get_proportion(bucket.files_size, total_size) * 100),
+            format_percent(bucket.files_size, total_size),
             bucket.last_modified,
             bucket.cost ]
         data.append(d)
@@ -92,7 +109,8 @@ def print_buckets(buckets):
         dataframe = dataframe[dataframe.Region == args.regionfilter]
     
     if args.sort:
-        dataframe = dataframe.sort_values(features[args.sort], ascending=False)
+        if not args.group or (args.sort != 'creation' and args.sort != 'modified'):
+            dataframe = dataframe.sort_values(features[args.sort], ascending=False)
 
     if dataframe.empty:
         print("No buckets match your criteria")
