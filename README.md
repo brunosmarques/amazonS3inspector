@@ -34,10 +34,10 @@ python awsls.py
   --verbose, -v
   --bucketfilter, -b       BUCKETNAME
   --filefilter, -f         FILENAME
-  --regionfilter, -r       { us-east-2,us-east-1,us-west-1,us-west-2,ap-east-1,ap-south-1,... }
-  --unit, -u               { kb,KB,mb,MB,gb,GB,TB }
-  --sort, -s               { region,creation,files,modified,size,cost }
-  --type, -t               { STANDARD,REDUCED_REDUNDANCY,STANDARD_IA,ONEZONE_IA,INTELLIGENT_TIE }
+  --regionfilter, -r       {us-east-2,us-east-1,us-west-1,us-west-2,ap-east-1,ap-south-1,...}
+  --unit, -u               {kb,KB,mb,MB,gb,GB,TB}
+  --sort, -s               {region,creation,files,modified,size,cost}
+  --type, -t               {STANDARD,REDUCED_REDUNDANCY,STANDARD_IA,ONEZONE_IA,INTELLIGENT_TIE}
   --group, -g
 ```
 ## Examples
@@ -49,24 +49,24 @@ python awsls.py -s cost
   <summary>Result</summary>  
   
 ```
-                   Region       Creation Date  Files             Size       Last modified      Cost
-mybucketprd2    us-east-2 2019-09-13 12:05:44    373  721070816 bytes 2019-09-14 15:01:38  1.159216
-mybucketprd3    sa-east-1 2019-09-13 12:06:21      3  113500480 bytes 2019-09-14 19:49:03  0.182467
-mybucketprd1    us-east-2 2019-09-13 12:05:21      8    3552303 bytes 2019-09-15 21:07:33  0.005711
-mybucket1       us-east-2 2019-09-15 19:26:16      1          0 bytes 2019-09-15 19:27:18  0.000000
+                   Region       Creation Date  Files             Size  % Size       Last modified      Cost
+mybucketprd002  us-east-2 2019-09-13 12:05:44    373  721070816 bytes  86.03% 2019-09-14 15:01:38  1.193732
+mybucketprd003  sa-east-1 2019-09-13 12:06:21      3  113500480 bytes  13.54% 2019-09-14 19:49:03  0.187900
+mybucketprd001  us-east-2 2019-09-13 12:05:21      8    3552303 bytes   0.42% 2019-09-15 21:07:33  0.005881
+bucket1         us-east-2 2019-09-15 19:26:16      1          0 bytes   0.00% 2019-09-15 19:27:18  0.000000
 ```
 </details>
 
 #### Get details from a specific bucket named "mybucket1"
 ```
-python awsls.py -b mybucket1
+python awsls.py -b bucket1
 ```
 <details>
   <summary>Result</summary>  
   
 ```
-              Region       Creation Date  Files     Size       Last modified  Cost
-mybucket1  us-east-2 2019-09-15 19:26:16      1  0 bytes 2019-09-15 19:27:18     0
+            Region       Creation Date  Files     Size % Size       Last modified  Cost
+bucket1  us-east-2 2019-09-15 19:26:16      1  0 bytes  0.00% 2019-09-15 19:27:18     0
 ```
 </details>
 
@@ -78,10 +78,10 @@ python awsls.py -b prd -s modified -u MB
   <summary>Result</summary>  
   
 ```
-                 Region       Creation Date  Files    Size       Last modified      Cost
-mybucketprd1  us-east-2 2019-09-13 12:05:21      8    3 MB 2019-09-15 21:07:33  0.005881
-mybucketprd3  sa-east-1 2019-09-13 12:06:21      3  108 MB 2019-09-14 19:49:03  0.187900
-mybucketprd2  us-east-2 2019-09-13 12:05:44    373  688 MB 2019-09-14 15:01:38  1.193732
+                   Region       Creation Date  Files    Size  % Size       Last modified      Cost
+mybucketprd001  us-east-2 2019-09-13 12:05:21      8    3 MB   0.42% 2019-09-15 21:07:33  0.005881
+mybucketprd003  sa-east-1 2019-09-13 12:06:21      3  108 MB  13.54% 2019-09-14 19:49:03  0.187900
+mybucketprd002  us-east-2 2019-09-13 12:05:44    373  688 MB  86.03% 2019-09-14 15:01:38  1.193732
 ```
 </details>
 
@@ -93,9 +93,10 @@ python awsls.py -r us-east-2
   <summary>Result</summary>  
   
 ```
-                 Region       Creation Date  Files    Size       Last modified      Cost
-mybucketprd1  us-east-2 2019-09-13 12:05:21      8    3 MB 2019-09-15 21:07:33  0.005881
-mybucketprd2  us-east-2 2019-09-13 12:05:44    373  688 MB 2019-09-14 15:01:38  1.193732
+                   Region       Creation Date  Files             Size  % Size       Last modified      Cost
+bucket1         us-east-2 2019-09-15 19:26:16      1          0 bytes   0.00% 2019-09-15 19:27:18  0.000000
+mybucketprd001  us-east-2 2019-09-13 12:05:21      8    3552303 bytes   0.49% 2019-09-15 21:07:33  0.006802
+mybucketprd002  us-east-2 2019-09-13 12:05:44    373  721070816 bytes  99.51% 2019-09-14 15:01:38  1.380711
 ```
 </details>
 
@@ -122,11 +123,11 @@ python awsls.py -f CACHE
   <summary>Result</summary>  
   
 ```
-                 Region       Creation Date  Files           Size        Last modified      Cost
-mybucket1     us-east-2 2019-09-15 19:26:16      1        0 bytes  2019-09-15 19:27:18  0.000000
-mybucketprd1  us-east-2 2019-09-13 12:05:21      6  1974110 bytes  2019-09-15 21:07:33  1.387513
-mybucketprd2  us-east-2 2019-09-13 12:05:44      0        0 bytes  0001-01-01 00:00:00  0.000000
-mybucketprd3  sa-east-1 2019-09-13 12:06:21      0        0 bytes  0001-01-01 00:00:00  0.000000
+                   Region       Creation Date  Files           Size   % Size        Last modified      Cost
+bucket1         us-east-2 2019-09-15 19:26:16      1        0 bytes    0.00%  2019-09-15 19:27:18  0.000000
+mybucketprd001  us-east-2 2019-09-13 12:05:21      6  1974110 bytes  100.00%  2019-09-15 21:07:33  1.387513
+mybucketprd002  us-east-2 2019-09-13 12:05:44      0        0 bytes    0.00%                    -  0.000000
+mybucketprd003  sa-east-1 2019-09-13 12:06:21      0        0 bytes    0.00%                    -  0.000000
 ```
 </details>
 
@@ -138,7 +139,7 @@ python awsls.py -b mybucketprd2 -t STANDARD -u KB
   <summary>Result</summary>  
   
 ```
-                 Region       Creation Date  Files        Size       Last modified      Cost
-mybucketprd2  us-east-2 2019-09-13 12:05:44    373  704,171 KB 2019-09-14 15:01:38  1.387513
+                   Region       Creation Date  Files        Size   % Size       Last modified      Cost
+mybucketprd002  us-east-2 2019-09-13 12:05:44    373  704,171 KB  100.00% 2019-09-14 15:01:38  1.387513
 ```
 </details>
