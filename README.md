@@ -34,7 +34,7 @@ python awsls.py
   --verbose, -v
   --bucketfilter, -b       BUCKETNAME
   --filefilter, -f         FILENAME
-  --regionfilter, -r       { us-east-2,us-east-1,us-west-1,us-west-2,ap-east-1,ap-south-1,... }
+  --regionfilter, -r       {us-east-2,us-east-1,us-west-1,us-west-2,ap-east-1,ap-south-1,...}
   --unit, -u               {kb,KB,mb,MB,gb,GB,TB}
   --sort, -s               {region,creation,files,modified,size,cost}
   --type, -t               {STANDARD,REDUCED_REDUNDANCY,STANDARD_IA,ONEZONE_IA,INTELLIGENT_TIE}
