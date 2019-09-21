@@ -64,7 +64,7 @@ def format_percent(part, whole):
     return "{:.2f}%".format(proportion * 100)
 
 def get_proportion(part, whole):
-    """ Get proportion between part and whole, if whole is zero, returns 1 to be used as 100%
+    """ Get proportion between part and whole, if whole is zero, returns 0 to be used as 0%
     """
     if whole == 0:
         return 0
